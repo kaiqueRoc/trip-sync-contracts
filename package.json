@@ -1,0 +1,54 @@
+{
+  "name": "@trip-sync/contracts",
+  "version": "1.0.0",
+  "description": "Schema-first API contracts for TripSync — Zod schemas, TypeScript types, and OpenAPI 3.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./openapi.json": "./docs/openapi/openapi.json"
+  },
+  "files": [
+    "dist",
+    "docs/openapi/openapi.json",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "docs:openapi": "tsx scripts/generate-openapi.ts",
+    "docs:check": "npm run docs:openapi && git diff --exit-code docs/openapi/openapi.json",
+    "prepublishOnly": "npm run build && npm run docs:check",
+    "test": "vitest run",
+    "lint": "tsc --noEmit"
+  },
+  "keywords": [
+    "zod",
+    "openapi",
+    "typescript",
+    "trip-sync",
+    "schema-first"
+  ],
+  "author": "Kaique Rocha <kaiqueroc@users.noreply.github.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kaiqueRoc/trip-sync-contracts.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "zod": "^3.24.1"
+  },
+  "devDependencies": {
+    "@asteasolutions/zod-to-openapi": "^7.3.0",
+    "@types/node": "^22.10.7",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}
