@@ -1,4 +1,5 @@
 import { z } from "./z.js";
+import { CabinClassSchema } from "./flight.js";
 
 export const BookingStatusSchema = z
   .enum(["PENDING", "CONFIRMED", "CANCELLED"])
@@ -12,37 +13,29 @@ export const BookingIdParamSchema = z
 
 export const CreateBookingInputSchema = z
   .object({
-    travelerName: z
+    passengerName: z.string().min(2).max(120),
+    passengerDocument: z
       .string()
-      .min(2)
-      .max(120)
-      .describe("Full name of the traveler"),
-    destination: z
-      .string()
-      .min(2)
-      .max(200)
-      .describe("City or destination label"),
-    checkIn: z.string().datetime().describe("Check-in date (ISO 8601)"),
-    checkOut: z.string().datetime().describe("Check-out date (ISO 8601)"),
-    amountCents: z
-      .number()
-      .int()
-      .positive()
-      .describe("Total amount in cents"),
-    currency: z
-      .string()
-      .length(3)
-      .default("BRL")
-      .describe("ISO 4217 currency code"),
+      .min(5)
+      .max(20)
+      .describe("CPF or passport number"),
+    passengerEmail: z.string().email(),
+    flightId: z.string().describe("Flight id from the search results"),
+    airline: z.string(),
+    flightNumber: z.string(),
+    originAirport: z.string().length(3),
+    destinationAirport: z.string().length(3),
+    departureAt: z.string().datetime(),
+    arrivalAt: z.string().datetime(),
+    cabinClass: CabinClassSchema,
+    seatNumber: z.string(),
+    amountCents: z.number().int().positive(),
+    currency: z.string().length(3).default("BRL"),
     providerId: z
       .string()
       .cuid()
       .optional()
       .describe("Optional linked provider for sync"),
-  })
-  .refine((data) => new Date(data.checkOut) > new Date(data.checkIn), {
-    message: "checkOut must be after checkIn",
-    path: ["checkOut"],
   })
   .openapi("CreateBookingInput");
 
@@ -59,14 +52,22 @@ export const BookingResponseSchema = z
     reference: z
       .string()
       .regex(/^BK-[A-Z0-9]{8}$/)
-      .describe("Human-readable booking reference"),
-    travelerName: z.string(),
-    destination: z.string(),
-    checkIn: z.string().datetime(),
-    checkOut: z.string().datetime(),
+      .describe("Human-readable ticket locator"),
+    passengerName: z.string(),
+    passengerDocument: z.string(),
+    passengerEmail: z.string().email(),
+    airline: z.string(),
+    flightNumber: z.string(),
+    originAirport: z.string(),
+    destinationAirport: z.string(),
+    departureAt: z.string().datetime(),
+    arrivalAt: z.string().datetime(),
+    cabinClass: CabinClassSchema,
+    seatNumber: z.string(),
     amountCents: z.number().int().positive(),
     currency: z.string().length(3),
     status: BookingStatusSchema,
+    userId: z.string().nullable(),
     providerId: z.string().cuid().nullable(),
     createdAt: z.string().datetime(),
     updatedAt: z.string().datetime(),
@@ -78,8 +79,6 @@ export const BookingListQuerySchema = z
     page: z.coerce.number().int().min(1).default(1),
     pageSize: z.coerce.number().int().min(1).max(100).default(20),
     status: BookingStatusSchema.optional(),
-    destination: z.string().optional().describe("Filter by destination (partial match)"),
-    providerId: z.string().cuid().optional(),
   })
   .openapi("BookingListQuery");
 

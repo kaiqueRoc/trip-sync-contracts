@@ -2,8 +2,8 @@
   "openapi": "3.1.0",
   "info": {
     "title": "TripSync API",
-    "version": "1.1.0",
-    "description": "Travel B2B integration API — schema-first contracts from Zod (@trip-sync/contracts).",
+    "version": "2.0.0",
+    "description": "B2C flight booking API — schema-first contracts from Zod (@trip-sync/contracts).",
     "contact": {
       "name": "Kaique Rocha",
       "url": "https://github.com/kaiqueRoc"
@@ -25,12 +25,20 @@
       "description": "Health and metadata"
     },
     {
-      "name": "Bookings",
-      "description": "Reservation lifecycle"
+      "name": "Auth",
+      "description": "Traveler account and login"
     },
     {
-      "name": "Offers",
-      "description": "Mocked availability search"
+      "name": "Flights",
+      "description": "Mocked flight search and seat maps"
+    },
+    {
+      "name": "Payments",
+      "description": "Mocked payment processing"
+    },
+    {
+      "name": "Bookings",
+      "description": "Ticket issuance lifecycle"
     },
     {
       "name": "Providers",
@@ -97,6 +105,14 @@
           "checks"
         ]
       },
+      "CabinClass": {
+        "type": "string",
+        "enum": [
+          "ECONOMY",
+          "PREMIUM",
+          "BUSINESS"
+        ]
+      },
       "BookingStatus": {
         "type": "string",
         "enum": [
@@ -115,21 +131,43 @@
           "reference": {
             "type": "string",
             "pattern": "^BK-[A-Z0-9]{8}$",
-            "description": "Human-readable booking reference"
+            "description": "Human-readable ticket locator"
           },
-          "travelerName": {
+          "passengerName": {
             "type": "string"
           },
-          "destination": {
+          "passengerDocument": {
             "type": "string"
           },
-          "checkIn": {
+          "passengerEmail": {
+            "type": "string",
+            "format": "email"
+          },
+          "airline": {
+            "type": "string"
+          },
+          "flightNumber": {
+            "type": "string"
+          },
+          "originAirport": {
+            "type": "string"
+          },
+          "destinationAirport": {
+            "type": "string"
+          },
+          "departureAt": {
             "type": "string",
             "format": "date-time"
           },
-          "checkOut": {
+          "arrivalAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "cabinClass": {
+            "$ref": "#/components/schemas/CabinClass"
+          },
+          "seatNumber": {
+            "type": "string"
           },
           "amountCents": {
             "type": "integer",
@@ -142,6 +180,12 @@
           },
           "status": {
             "$ref": "#/components/schemas/BookingStatus"
+          },
+          "userId": {
+            "type": [
+              "string",
+              "null"
+            ]
           },
           "providerId": {
             "type": [
@@ -162,13 +206,21 @@
         "required": [
           "id",
           "reference",
-          "travelerName",
-          "destination",
-          "checkIn",
-          "checkOut",
+          "passengerName",
+          "passengerDocument",
+          "passengerEmail",
+          "airline",
+          "flightNumber",
+          "originAirport",
+          "destinationAirport",
+          "departureAt",
+          "arrivalAt",
+          "cabinClass",
+          "seatNumber",
           "amountCents",
           "currency",
           "status",
+          "userId",
           "providerId",
           "createdAt",
           "updatedAt"
@@ -279,39 +331,64 @@
       "CreateBookingInput": {
         "type": "object",
         "properties": {
-          "travelerName": {
+          "passengerName": {
             "type": "string",
             "minLength": 2,
-            "maxLength": 120,
-            "description": "Full name of the traveler"
+            "maxLength": 120
           },
-          "destination": {
+          "passengerDocument": {
             "type": "string",
-            "minLength": 2,
-            "maxLength": 200,
-            "description": "City or destination label"
+            "minLength": 5,
+            "maxLength": 20,
+            "description": "CPF or passport number"
           },
-          "checkIn": {
+          "passengerEmail": {
             "type": "string",
-            "format": "date-time",
-            "description": "Check-in date (ISO 8601)"
+            "format": "email"
           },
-          "checkOut": {
+          "flightId": {
             "type": "string",
-            "format": "date-time",
-            "description": "Check-out date (ISO 8601)"
+            "description": "Flight id from the search results"
+          },
+          "airline": {
+            "type": "string"
+          },
+          "flightNumber": {
+            "type": "string"
+          },
+          "originAirport": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "destinationAirport": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3
+          },
+          "departureAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "arrivalAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cabinClass": {
+            "$ref": "#/components/schemas/CabinClass"
+          },
+          "seatNumber": {
+            "type": "string"
           },
           "amountCents": {
             "type": "integer",
-            "exclusiveMinimum": 0,
-            "description": "Total amount in cents"
+            "exclusiveMinimum": 0
           },
           "currency": {
             "type": "string",
             "minLength": 3,
             "maxLength": 3,
-            "default": "BRL",
-            "description": "ISO 4217 currency code"
+            "default": "BRL"
           },
           "providerId": {
             "type": "string",
@@ -320,10 +397,18 @@
           }
         },
         "required": [
-          "travelerName",
-          "destination",
-          "checkIn",
-          "checkOut",
+          "passengerName",
+          "passengerDocument",
+          "passengerEmail",
+          "flightId",
+          "airline",
+          "flightNumber",
+          "originAirport",
+          "destinationAirport",
+          "departureAt",
+          "arrivalAt",
+          "cabinClass",
+          "seatNumber",
           "amountCents"
         ]
       },
@@ -348,114 +433,335 @@
           "status"
         ]
       },
-      "Offer": {
+      "CabinClassOption": {
+        "type": "object",
+        "properties": {
+          "cabinClass": {
+            "$ref": "#/components/schemas/CabinClass"
+          },
+          "priceCents": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "seatsAvailable": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "required": [
+          "cabinClass",
+          "priceCents",
+          "seatsAvailable"
+        ]
+      },
+      "Flight": {
         "type": "object",
         "properties": {
           "id": {
             "type": "string",
-            "description": "Deterministic offer identifier — stable for the same search query"
+            "description": "Deterministic flight identifier — stable for the same search query"
           },
-          "destination": {
+          "airline": {
             "type": "string"
           },
-          "providerName": {
-            "type": "string",
-            "description": "Mocked hotel/pousada name"
-          },
-          "roomType": {
+          "flightNumber": {
             "type": "string"
           },
-          "nights": {
-            "type": "integer",
-            "exclusiveMinimum": 0
+          "originAirport": {
+            "type": "string"
           },
-          "pricePerNightCents": {
-            "type": "integer",
-            "exclusiveMinimum": 0
+          "originCity": {
+            "type": "string"
           },
-          "totalAmountCents": {
-            "type": "integer",
-            "exclusiveMinimum": 0
+          "destinationAirport": {
+            "type": "string"
           },
-          "currency": {
+          "destinationCity": {
+            "type": "string"
+          },
+          "departureAt": {
             "type": "string",
-            "minLength": 3,
-            "maxLength": 3,
-            "default": "BRL"
+            "format": "date-time"
           },
-          "rating": {
-            "type": "number",
-            "minimum": 1,
-            "maximum": 5
+          "arrivalAt": {
+            "type": "string",
+            "format": "date-time"
           },
-          "amenities": {
+          "durationMinutes": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "aircraft": {
+            "type": "string"
+          },
+          "cabinClasses": {
             "type": "array",
             "items": {
-              "type": "string"
+              "$ref": "#/components/schemas/CabinClassOption"
             }
           }
         },
         "required": [
           "id",
-          "destination",
-          "providerName",
-          "roomType",
-          "nights",
-          "pricePerNightCents",
-          "totalAmountCents",
-          "rating",
-          "amenities"
+          "airline",
+          "flightNumber",
+          "originAirport",
+          "originCity",
+          "destinationAirport",
+          "destinationCity",
+          "departureAt",
+          "arrivalAt",
+          "durationMinutes",
+          "aircraft",
+          "cabinClasses"
         ]
       },
-      "SearchOffersQuery": {
+      "SearchFlightsQuery": {
         "type": "object",
         "properties": {
+          "origin": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "description": "Origin airport IATA code, e.g. GRU"
+          },
           "destination": {
             "type": "string",
-            "minLength": 2,
-            "maxLength": 200,
-            "description": "City or destination label"
+            "minLength": 3,
+            "maxLength": 3,
+            "description": "Destination airport IATA code, e.g. GIG"
           },
-          "checkIn": {
+          "departureDate": {
             "type": "string",
             "format": "date-time",
-            "description": "Check-in date (ISO 8601)"
+            "description": "Departure date (ISO 8601)"
           },
-          "checkOut": {
-            "type": "string",
-            "format": "date-time",
-            "description": "Check-out date (ISO 8601)"
-          },
-          "travelers": {
+          "passengers": {
             "type": "integer",
             "minimum": 1,
             "maximum": 9,
             "default": 1,
-            "description": "Number of travelers"
+            "description": "Number of passengers"
           }
         },
         "required": [
+          "origin",
           "destination",
-          "checkIn",
-          "checkOut"
+          "departureDate"
         ]
       },
-      "SearchOffersResponse": {
+      "SearchFlightsResponse": {
         "type": "object",
         "properties": {
           "data": {
             "type": "array",
             "items": {
-              "$ref": "#/components/schemas/Offer"
+              "$ref": "#/components/schemas/Flight"
             }
           },
           "query": {
-            "$ref": "#/components/schemas/SearchOffersQuery"
+            "$ref": "#/components/schemas/SearchFlightsQuery"
           }
         },
         "required": [
           "data",
           "query"
+        ]
+      },
+      "SeatType": {
+        "type": "string",
+        "enum": [
+          "WINDOW",
+          "MIDDLE",
+          "AISLE"
+        ]
+      },
+      "Seat": {
+        "type": "object",
+        "properties": {
+          "seatNumber": {
+            "type": "string",
+            "description": "e.g. 14C"
+          },
+          "row": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "column": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 1
+          },
+          "seatType": {
+            "$ref": "#/components/schemas/SeatType"
+          },
+          "cabinClass": {
+            "$ref": "#/components/schemas/CabinClass"
+          },
+          "available": {
+            "type": "boolean"
+          },
+          "extraFeeCents": {
+            "type": "integer",
+            "minimum": 0,
+            "default": 0
+          }
+        },
+        "required": [
+          "seatNumber",
+          "row",
+          "column",
+          "seatType",
+          "cabinClass",
+          "available"
+        ]
+      },
+      "SeatMapResponse": {
+        "type": "object",
+        "properties": {
+          "flightId": {
+            "type": "string"
+          },
+          "cabinClass": {
+            "$ref": "#/components/schemas/CabinClass"
+          },
+          "seats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Seat"
+            }
+          }
+        },
+        "required": [
+          "flightId",
+          "cabinClass",
+          "seats"
+        ]
+      },
+      "MockPaymentResult": {
+        "type": "object",
+        "properties": {
+          "approved": {
+            "type": "boolean"
+          },
+          "authorizationCode": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "approved",
+          "authorizationCode"
+        ]
+      },
+      "MockPaymentInput": {
+        "type": "object",
+        "properties": {
+          "cardHolderName": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "cardNumber": {
+            "type": "string",
+            "pattern": "^\\d{13,19}$",
+            "description": "Digits only — validated for shape, never persisted"
+          },
+          "expiry": {
+            "type": "string",
+            "pattern": "^(0[1-9]|1[0-2])\\/\\d{2}$",
+            "description": "MM/YY"
+          },
+          "cvv": {
+            "type": "string",
+            "pattern": "^\\d{3,4}$"
+          },
+          "amountCents": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          }
+        },
+        "required": [
+          "cardHolderName",
+          "cardNumber",
+          "expiry",
+          "cvv",
+          "amountCents"
+        ]
+      },
+      "AuthUser": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "email"
+        ]
+      },
+      "AuthResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string"
+          },
+          "user": {
+            "$ref": "#/components/schemas/AuthUser"
+          }
+        },
+        "required": [
+          "token",
+          "user"
+        ]
+      },
+      "RegisterInput": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 120
+          },
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 72
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password"
+        ]
+      },
+      "LoginInput": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "format": "email"
+          },
+          "password": {
+            "type": "string",
+            "minLength": 1
+          }
+        },
+        "required": [
+          "email",
+          "password"
         ]
       },
       "IntegrationType": {
@@ -753,25 +1059,6 @@
             "required": false,
             "name": "status",
             "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "description": "Filter by destination (partial match)"
-            },
-            "required": false,
-            "description": "Filter by destination (partial match)",
-            "name": "destination",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "cuid"
-            },
-            "required": false,
-            "name": "providerId",
-            "in": "query"
           }
         ],
         "responses": {
@@ -1014,22 +1301,34 @@
         }
       }
     },
-    "/offers/search": {
+    "/flights/search": {
       "get": {
-        "summary": "Search mocked availability offers",
+        "summary": "Search mocked flight availability",
         "tags": [
-          "Offers"
+          "Flights"
         ],
         "parameters": [
           {
             "schema": {
               "type": "string",
-              "minLength": 2,
-              "maxLength": 200,
-              "description": "City or destination label"
+              "minLength": 3,
+              "maxLength": 3,
+              "description": "Origin airport IATA code, e.g. GRU"
             },
             "required": true,
-            "description": "City or destination label",
+            "description": "Origin airport IATA code, e.g. GRU",
+            "name": "origin",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 3,
+              "maxLength": 3,
+              "description": "Destination airport IATA code, e.g. GIG"
+            },
+            "required": true,
+            "description": "Destination airport IATA code, e.g. GIG",
             "name": "destination",
             "in": "query"
           },
@@ -1037,22 +1336,11 @@
             "schema": {
               "type": "string",
               "format": "date-time",
-              "description": "Check-in date (ISO 8601)"
+              "description": "Departure date (ISO 8601)"
             },
             "required": true,
-            "description": "Check-in date (ISO 8601)",
-            "name": "checkIn",
-            "in": "query"
-          },
-          {
-            "schema": {
-              "type": "string",
-              "format": "date-time",
-              "description": "Check-out date (ISO 8601)"
-            },
-            "required": true,
-            "description": "Check-out date (ISO 8601)",
-            "name": "checkOut",
+            "description": "Departure date (ISO 8601)",
+            "name": "departureDate",
             "in": "query"
           },
           {
@@ -1061,21 +1349,239 @@
               "minimum": 1,
               "maximum": 9,
               "default": 1,
-              "description": "Number of travelers"
+              "description": "Number of passengers"
             },
             "required": false,
-            "description": "Number of travelers",
-            "name": "travelers",
+            "description": "Number of passengers",
+            "name": "passengers",
             "in": "query"
           }
         ],
         "responses": {
           "200": {
-            "description": "Mocked offer results — deterministic per query",
+            "description": "Mocked flight results — deterministic per query",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SearchOffersResponse"
+                  "$ref": "#/components/schemas/SearchFlightsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/flights/{flightId}/seatmap": {
+      "get": {
+        "summary": "Get the mocked seat map for a flight + cabin class",
+        "tags": [
+          "Flights"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string"
+            },
+            "required": true,
+            "name": "flightId",
+            "in": "path"
+          },
+          {
+            "schema": {
+              "$ref": "#/components/schemas/CabinClass"
+            },
+            "required": true,
+            "name": "cabinClass",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mocked seat map — deterministic per flight + cabin class",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SeatMapResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/payments/mock": {
+      "post": {
+        "summary": "Process a mocked payment (always approves, never persisted)",
+        "tags": [
+          "Payments"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MockPaymentInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Mock payment result",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MockPaymentResult"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/register": {
+      "post": {
+        "summary": "Register a new traveler account",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Account created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict / idempotency replay",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/login": {
+      "post": {
+        "summary": "Log in with email + password",
+        "tags": [
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Authenticated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthResponse"
                 }
               }
             }

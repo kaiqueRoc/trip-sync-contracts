@@ -13,9 +13,20 @@ import {
 import { ApiErrorSchema } from "./errors.js";
 import { HealthResponseSchema } from "./health.js";
 import {
-  SearchOffersQuerySchema,
-  SearchOffersResponseSchema,
-} from "./offer.js";
+  CabinClassSchema,
+  SearchFlightsQuerySchema,
+  SearchFlightsResponseSchema,
+} from "./flight.js";
+import { SeatMapResponseSchema } from "./seatmap.js";
+import {
+  MockPaymentInputSchema,
+  MockPaymentResultSchema,
+} from "./payment.js";
+import {
+  AuthResponseSchema,
+  LoginInputSchema,
+  RegisterInputSchema,
+} from "./auth.js";
 import {
   CreateProviderInputSchema,
   ProviderIdParamSchema,
@@ -148,14 +159,97 @@ registry.registerPath({
 
 registry.registerPath({
   method: "get",
-  path: "/offers/search",
-  summary: "Search mocked availability offers",
-  tags: ["Offers"],
-  request: { query: SearchOffersQuerySchema },
+  path: "/flights/search",
+  summary: "Search mocked flight availability",
+  tags: ["Flights"],
+  request: { query: SearchFlightsQuerySchema },
   responses: {
     200: {
-      description: "Mocked offer results — deterministic per query",
-      content: { "application/json": { schema: SearchOffersResponseSchema } },
+      description: "Mocked flight results — deterministic per query",
+      content: { "application/json": { schema: SearchFlightsResponseSchema } },
+    },
+    400: err400,
+    500: err500,
+  },
+});
+
+registry.registerPath({
+  method: "get",
+  path: "/flights/{flightId}/seatmap",
+  summary: "Get the mocked seat map for a flight + cabin class",
+  tags: ["Flights"],
+  request: {
+    params: z.object({ flightId: z.string() }),
+    query: z.object({ cabinClass: CabinClassSchema }),
+  },
+  responses: {
+    200: {
+      description: "Mocked seat map — deterministic per flight + cabin class",
+      content: { "application/json": { schema: SeatMapResponseSchema } },
+    },
+    400: err400,
+    500: err500,
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/payments/mock",
+  summary: "Process a mocked payment (always approves, never persisted)",
+  tags: ["Payments"],
+  request: {
+    body: {
+      content: { "application/json": { schema: MockPaymentInputSchema } },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      description: "Mock payment result",
+      content: { "application/json": { schema: MockPaymentResultSchema } },
+    },
+    400: err400,
+    500: err500,
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/auth/register",
+  summary: "Register a new traveler account",
+  tags: ["Auth"],
+  request: {
+    body: {
+      content: { "application/json": { schema: RegisterInputSchema } },
+      required: true,
+    },
+  },
+  responses: {
+    201: {
+      description: "Account created",
+      content: { "application/json": { schema: AuthResponseSchema } },
+    },
+    400: err400,
+    409: err409,
+    500: err500,
+  },
+});
+
+registry.registerPath({
+  method: "post",
+  path: "/auth/login",
+  summary: "Log in with email + password",
+  tags: ["Auth"],
+  request: {
+    body: {
+      content: { "application/json": { schema: LoginInputSchema } },
+      required: true,
+    },
+  },
+  responses: {
+    200: {
+      description: "Authenticated",
+      content: { "application/json": { schema: AuthResponseSchema } },
     },
     400: err400,
     500: err500,
@@ -285,9 +379,9 @@ export function generateOpenApiDocument() {
     openapi: "3.1.0",
     info: {
       title: "TripSync API",
-      version: "1.1.0",
+      version: "2.0.0",
       description:
-        "Travel B2B integration API — schema-first contracts from Zod (@trip-sync/contracts).",
+        "B2C flight booking API — schema-first contracts from Zod (@trip-sync/contracts).",
       contact: {
         name: "Kaique Rocha",
         url: "https://github.com/kaiqueRoc",
@@ -302,8 +396,10 @@ export function generateOpenApiDocument() {
     ],
     tags: [
       { name: "System", description: "Health and metadata" },
-      { name: "Bookings", description: "Reservation lifecycle" },
-      { name: "Offers", description: "Mocked availability search" },
+      { name: "Auth", description: "Traveler account and login" },
+      { name: "Flights", description: "Mocked flight search and seat maps" },
+      { name: "Payments", description: "Mocked payment processing" },
+      { name: "Bookings", description: "Ticket issuance lifecycle" },
       { name: "Providers", description: "REST/SOAP integration partners" },
       { name: "Sync", description: "Async provider synchronization" },
       { name: "Webhooks", description: "Inbound provider events" },
