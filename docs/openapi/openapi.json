@@ -2,7 +2,7 @@
   "openapi": "3.1.0",
   "info": {
     "title": "TripSync API",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "description": "Travel B2B integration API — schema-first contracts from Zod (@trip-sync/contracts).",
     "contact": {
       "name": "Kaique Rocha",
@@ -27,6 +27,10 @@
     {
       "name": "Bookings",
       "description": "Reservation lifecycle"
+    },
+    {
+      "name": "Offers",
+      "description": "Mocked availability search"
     },
     {
       "name": "Providers",
@@ -342,6 +346,116 @@
         },
         "required": [
           "status"
+        ]
+      },
+      "Offer": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "Deterministic offer identifier — stable for the same search query"
+          },
+          "destination": {
+            "type": "string"
+          },
+          "providerName": {
+            "type": "string",
+            "description": "Mocked hotel/pousada name"
+          },
+          "roomType": {
+            "type": "string"
+          },
+          "nights": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "pricePerNightCents": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "totalAmountCents": {
+            "type": "integer",
+            "exclusiveMinimum": 0
+          },
+          "currency": {
+            "type": "string",
+            "minLength": 3,
+            "maxLength": 3,
+            "default": "BRL"
+          },
+          "rating": {
+            "type": "number",
+            "minimum": 1,
+            "maximum": 5
+          },
+          "amenities": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "id",
+          "destination",
+          "providerName",
+          "roomType",
+          "nights",
+          "pricePerNightCents",
+          "totalAmountCents",
+          "rating",
+          "amenities"
+        ]
+      },
+      "SearchOffersQuery": {
+        "type": "object",
+        "properties": {
+          "destination": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 200,
+            "description": "City or destination label"
+          },
+          "checkIn": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Check-in date (ISO 8601)"
+          },
+          "checkOut": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Check-out date (ISO 8601)"
+          },
+          "travelers": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 9,
+            "default": 1,
+            "description": "Number of travelers"
+          }
+        },
+        "required": [
+          "destination",
+          "checkIn",
+          "checkOut"
+        ]
+      },
+      "SearchOffersResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Offer"
+            }
+          },
+          "query": {
+            "$ref": "#/components/schemas/SearchOffersQuery"
+          }
+        },
+        "required": [
+          "data",
+          "query"
         ]
       },
       "IntegrationType": {
@@ -879,6 +993,95 @@
           },
           "409": {
             "description": "Conflict / idempotency replay",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApiError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/offers/search": {
+      "get": {
+        "summary": "Search mocked availability offers",
+        "tags": [
+          "Offers"
+        ],
+        "parameters": [
+          {
+            "schema": {
+              "type": "string",
+              "minLength": 2,
+              "maxLength": 200,
+              "description": "City or destination label"
+            },
+            "required": true,
+            "description": "City or destination label",
+            "name": "destination",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Check-in date (ISO 8601)"
+            },
+            "required": true,
+            "description": "Check-in date (ISO 8601)",
+            "name": "checkIn",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "description": "Check-out date (ISO 8601)"
+            },
+            "required": true,
+            "description": "Check-out date (ISO 8601)",
+            "name": "checkOut",
+            "in": "query"
+          },
+          {
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 9,
+              "default": 1,
+              "description": "Number of travelers"
+            },
+            "required": false,
+            "description": "Number of travelers",
+            "name": "travelers",
+            "in": "query"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Mocked offer results — deterministic per query",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SearchOffersResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Validation error",
             "content": {
               "application/json": {
                 "schema": {

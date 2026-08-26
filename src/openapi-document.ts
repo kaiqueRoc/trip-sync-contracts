@@ -13,6 +13,10 @@ import {
 import { ApiErrorSchema } from "./errors.js";
 import { HealthResponseSchema } from "./health.js";
 import {
+  SearchOffersQuerySchema,
+  SearchOffersResponseSchema,
+} from "./offer.js";
+import {
   CreateProviderInputSchema,
   ProviderIdParamSchema,
   ProviderListResponseSchema,
@@ -144,6 +148,22 @@ registry.registerPath({
 
 registry.registerPath({
   method: "get",
+  path: "/offers/search",
+  summary: "Search mocked availability offers",
+  tags: ["Offers"],
+  request: { query: SearchOffersQuerySchema },
+  responses: {
+    200: {
+      description: "Mocked offer results — deterministic per query",
+      content: { "application/json": { schema: SearchOffersResponseSchema } },
+    },
+    400: err400,
+    500: err500,
+  },
+});
+
+registry.registerPath({
+  method: "get",
   path: "/providers",
   summary: "List integration providers",
   tags: ["Providers"],
@@ -265,7 +285,7 @@ export function generateOpenApiDocument() {
     openapi: "3.1.0",
     info: {
       title: "TripSync API",
-      version: "1.0.0",
+      version: "1.1.0",
       description:
         "Travel B2B integration API — schema-first contracts from Zod (@trip-sync/contracts).",
       contact: {
@@ -283,6 +303,7 @@ export function generateOpenApiDocument() {
     tags: [
       { name: "System", description: "Health and metadata" },
       { name: "Bookings", description: "Reservation lifecycle" },
+      { name: "Offers", description: "Mocked availability search" },
       { name: "Providers", description: "REST/SOAP integration partners" },
       { name: "Sync", description: "Async provider synchronization" },
       { name: "Webhooks", description: "Inbound provider events" },

@@ -1,6 +1,6 @@
 {
   "name": "@trip-sync/contracts",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Schema-first API contracts for TripSync — Zod schemas, TypeScript types, and OpenAPI 3.1",
   "type": "module",
   "main": "./dist/index.js",
